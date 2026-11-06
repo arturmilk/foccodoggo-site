@@ -415,8 +415,8 @@ h2,h3{font-weight:800;text-wrap:balance}
    Quatro cenas, cada uma presa a uma faixa do scroll. Entre cenas ele está sempre fora da tela,
    então a troca de cena nunca aparece.
    A · hero: grande, em pé sobre "occo"; no primeiro scroll anda para a direita e sai.
-   B · trabalhos: pequeno, entra pela esquerda no canto do painel e percorre os quatro cantos
-       em loops (sup. esq. → sup. dir. → inf. dir. → inf. esq.); sai andando pela esquerda.
+   B · trabalhos: pequeno, entra pela esquerda no canto sup. esq. do painel, anda em ondas suaves
+       até o canto sup. dir. e fica parado ali até sair da tela pelo scroll.
    C · como funciona: camada fixa; entra pela direita, para no canto superior direito, sai pela esquerda.
    D · dúvidas: desliza na horizontal; ao abrir uma pergunta, voa e pousa ao lado da resposta;
        depois segue até o botão de WhatsApp.
@@ -619,25 +619,24 @@ h2,h3{font-weight:800;text-wrap:balance}
       A.start=-1e9;A.map=function(y){return this.sRest+(this.sExit-this.sRest)*clamp(y/this.end,0,1)};
     })();
 
-    /* B · trabalhos: os quatro cantos do painel preto, em loops */
+    /* B · trabalhos: entra pelo canto sup. esq. do painel preto e anda em ondas suaves até o canto
+       sup. dir.; ali fica parado (camada do documento, rola junto) até sair da tela por cima.
+       Só volta a aparecer na cena C. */
     var B={name:'B',coord:'doc',S:Ss,Lg:1.3,La:2.6,w:11};
     (function(){
-      var S=Ss,p=rect(document.getElementById('trabalhos')),H=U.head*S,T=U.tail*S,UP=U.up*S,FT=U.foot*S,L0=U.L0*S;
+      var S=Ss,Sk=S/.3,p=rect(document.getElementById('trabalhos')),H=U.head*S,T=U.tail*S,UP=U.up*S,FT=U.foot*S,L0=U.L0*S;
       var rule=rect(document.querySelector('.work .running'));
-      var top=Math.max(rule.b+8-FT,p.t+10+UP),bottom=p.b-6-FT,xr=p.r-UP-18,cr=40+40*S;
-      var TLx=p.l+24+T+L0*B.Lg,BLx=p.l+24+H,maxL=Math.max(2*L0*B.La,.42*vh);B.maxL=maxL;
-      var xs=-(H+L0*B.La+T+maxL+80),xe=-(L0*B.La+T+40);
-      var rV=Math.min((bottom-top-2*cr)*.48,.24*vh),rH=(xr-(p.l+30+UP))*.46;
+      var top=Math.max(rule.b+8-FT,p.t+10+UP),maxL=Math.max(2*L0*B.La,.42*vh);B.maxL=maxL;
+      var xs=-(H+L0*B.La+T+maxL+80),xa=p.l+24+H,xb=p.r-24-H;
+      /* onda só para baixo (nunca cruza o fio do "running"), nº inteiro de ciclos: começa e termina nivelado */
+      var amp=14*Sk,n=Math.max(1,Math.round((xb-xa)/(260*Sk))),lam=(xb-xa)/n,steps=Math.max(8,Math.ceil((xb-xa)/6));
       var pb=new PB();pb.at(xs,top,1,0).line(-(H+12),top,1,0).mark(0);
-      pb.line(TLx,top,1,0).mark(.12*vh);                                   /* entra pela esquerda no canto sup. esq. */
-      pb.loops([xr-cr,top],rV,[0,1],1,1).mark(.34*vh);                     /* loop indo para a direita */
-      pb.bez([xr-cr*.45,top],[xr,top+cr*.55],[xr,top+cr],1,1,1);
-      pb.loops([xr,bottom-cr],rH,[-1,0],1,1).mark(Math.max(bottom-top,.25*vh)); /* desce pela direita */
-      pb.bez([xr,bottom-cr*.45],[xr-cr*.55,bottom],[xr-cr,bottom],1,-1,1); /* vira de lado no canto inf. dir. */
-      pb.loops([BLx,bottom],rV,[0,-1],-1,1).mark(.34*vh);                  /* loop indo para a esquerda */
-      pb.line(xe,bottom,-1,0).mark(.14*vh);                                 /* sai andando pela esquerda */
-      B.P=pb.done();B.start=p.t-.62*vh;B.end=p.b-.38*vh;
-      B.map=function(y){return arcAtW(this.P,this.P.W*clamp((y-this.start)/(this.end-this.start),0,1))};
+      pb.line(xa,top,1,0).mark(.1);                                        /* entra pela esquerda no canto sup. esq. */
+      for(var j=1;j<=steps;j++){var x=xa+(xb-xa)*j/steps;pb.at(x,top+amp*.5*(1-Math.cos(TAU*(x-xa)/lam)),1,0)}
+      pb.mark(.9);                                                         /* ondula até o canto sup. dir. */
+      B.P=pb.done();B.start=p.t-.62*vh;B.walk=p.t-.12*vh;
+      B.end=top+FT+30;                                                     /* pés acima da tela: some */
+      B.map=function(y){return arcAtW(this.P,this.P.W*clamp((y-this.start)/(this.walk-this.start),0,1))};
     })();
 
     /* C · como funciona: fixo na tela, canto superior direito */
